@@ -20,14 +20,14 @@ with st.sidebar:
 def preparar_dados(ticker, periodo):
     df = yf.download(ticker, period=periodo)
 
-    if df.empty:
-        st.error("Erro: Nenhum dado retornado. Verifique o ticker ou o período selecionado.")
+    if df.empty or 'Close' not in df.columns or df['Close'].isnull().all():
+        st.error("Erro: Nenhum dado de fechamento disponível. Verifique o ticker ou o período.")
         return pd.DataFrame()
 
     df['MA20'] = df['Close'].rolling(window=20).mean()
     df['MA50'] = df['Close'].rolling(window=50).mean()
-    df['RSI'] = RSIIndicator(df['Close']).rsi()
-    macd = MACD(df['Close'])
+    df['RSI'] = RSIIndicator(close=df['Close'].fillna(method='ffill')).rsi()
+    macd = MACD(close=df['Close'].fillna(method='ffill'))
     df['MACD'] = macd.macd()
     df['MACD_signal'] = macd.macd_signal()
     df['Target'] = 0
