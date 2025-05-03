@@ -22,7 +22,17 @@ def preparar_dados(ticker, periodo):
 
     if df.empty or 'Close' not in df.columns or df['Close'].isnull().all():
         st.error("Erro: Nenhum dado de fechamento disponível. Verifique o ticker ou o período.")
-        return pd.DataFrame()
+        if df.empty:
+            st.error("Erro: Nenhum dado retornado. Verifique o ticker ou período.")
+            return pd.DataFrame()
+
+        if 'Close' not in df.columns:
+            st.error("Erro: Coluna 'Close' não encontrada nos dados.")
+            return pd.DataFrame()
+
+        if df['Close'].isnull().all():
+            st.error("Erro: Todos os valores da coluna 'Close' estão nulos.")
+            return pd.DataFrame()
 
     df['MA20'] = df['Close'].rolling(window=20).mean()
     df['MA50'] = df['Close'].rolling(window=50).mean()
