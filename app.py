@@ -19,6 +19,11 @@ with st.sidebar:
 @st.cache_data
 def preparar_dados(ticker, periodo):
     df = yf.download(ticker, period=periodo)
+
+    if df.empty:
+        st.error("Erro: Nenhum dado retornado. Verifique o ticker ou o período selecionado.")
+        return pd.DataFrame()
+
     df['MA20'] = df['Close'].rolling(window=20).mean()
     df['MA50'] = df['Close'].rolling(window=50).mean()
     df['RSI'] = RSIIndicator(df['Close']).rsi()
@@ -27,8 +32,8 @@ def preparar_dados(ticker, periodo):
     df['MACD_signal'] = macd.macd_signal()
     df['Target'] = 0
     df['Future Close'] = df['Close'].shift(-1)
-    df['Target'][df['Future Close'] > df['Close']] = 1
-    df['Target'][df['Future Close'] < df['Close']] = -1
+    df.loc[df['Future Close'] > df['Close'], 'Target'] = 1
+    df.loc[df['Future Close'] < df['Close'], 'Target'] = -1
     df.dropna(inplace=True)
     return df
 
@@ -91,6 +96,9 @@ def exibir_rsi(df):
 
 # Execução
 df = preparar_dados(ticker, periodo)
+if df.empty:
+    st.stop()
+
 df, modelo = treinar_modelo(df)
 historico, valor_final = simular_operacoes(df)
 
